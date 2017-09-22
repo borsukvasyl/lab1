@@ -3,7 +3,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +17,10 @@ public class Main {
     }
 
     public static void parse(String url) throws IOException {
+        new File("data").mkdirs();
+
         int numberOfPages = countPages(url);
-        for (int pageNumber = 0; pageNumber < 1; pageNumber++) {
+        for (int pageNumber = 1; pageNumber < numberOfPages + 1; pageNumber++) {
             String pageUrl = url + "page=" + pageNumber + "/";
             parsePages(pageUrl);
         }
@@ -34,10 +38,11 @@ public class Main {
 
     public static void parsePages(String pageUrl) throws IOException {
         Document doc = Jsoup.connect(pageUrl).get();
-        Elements tiles = doc.getElementsByClass("g-i-tile-i-title");
+        Elements tiles = doc.getElementsByClass("g-i-tile-i-title").select("a");
         System.out.println(tiles.size());
+
         for (Element tile : tiles) {
-            String link = tile.getElementsByTag("a").attr("href");
+            String link = tile.attr("abs:href") + "comments/";
             parseReviews(link);
         }
     }
@@ -46,23 +51,29 @@ public class Main {
         int numberOfPages = countPages(basePageUrl);
         List sentiments = new ArrayList();
 
-        for (int pageNumber = 0; pageNumber < numberOfPages + 1; pageNumber++) {
+        for (int pageNumber = 0; pageNumber < numberOfPages; pageNumber++) {
             String pageUrl = basePageUrl + "/page=" + pageNumber + "/";
-            System.out.println(pageUrl);
             sentiments.addAll(parseReviewsPage(pageUrl));
         }
+
+        String filename = "data/" + basePageUrl.split("/")[4] + ".csv";
+        PrintWriter writer = new PrintWriter(filename);
+        for (Object line : sentiments) {
+            writer.write(line.toString());
+        }
+        writer.close();
+        System.out.println(sentiments.size() + " from " + basePageUrl);
     }
 
     public static List parseReviewsPage(String pageUrl) throws IOException {
         Document doc = Jsoup.connect(pageUrl).get();
-        Elements reviews = doc.getElementsByClass("pp-review-i");
-        System.out.println(reviews.size());
+        Elements reviews = doc.getElementsByClass("pp-review-i").select("article");
 
         List sentiments = new ArrayList();
         for (Element review : reviews) {
             String stars = review.getElementsByClass("g-rating-stars-i").attr("content");
             if (!stars.equals("")) {
-                String text = review.getElementsByClass("pp-review-text-i").get(0).text();
+                String text = stars + ", \"" + review.getElementsByClass("pp-review-text-i").get(0).text() + "\"\n";
                 sentiments.add(text);
             }
         }
