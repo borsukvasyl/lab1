@@ -27,7 +27,7 @@ public class Main {
     }
 
     public static int countPages(String pageUrl) throws IOException {
-        Document doc = Jsoup.connect(pageUrl).get();
+        Document doc = Jsoup.connect(pageUrl).timeout(0).get();
         Elements nums = doc.getElementsByClass("paginator-catalog-l-link");
         if (nums.size() > 0) {
             return Integer.parseInt(nums.get(nums.size() - 1).text());
@@ -37,7 +37,7 @@ public class Main {
     }
 
     public static void parsePages(String pageUrl) throws IOException {
-        Document doc = Jsoup.connect(pageUrl).get();
+        Document doc = Jsoup.connect(pageUrl).timeout(0).get();
         Elements tiles = doc.getElementsByClass("g-i-tile-i-title").select("a");
         System.out.println(tiles.size());
 
@@ -66,7 +66,7 @@ public class Main {
     }
 
     public static List parseReviewsPage(String pageUrl) throws IOException {
-        Document doc = Jsoup.connect(pageUrl).get();
+        Document doc = Jsoup.connect(pageUrl).timeout(0).get();
         Elements reviews = doc.getElementsByClass("pp-review-i").select("article");
 
         List sentiments = new ArrayList();
